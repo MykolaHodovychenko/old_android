@@ -4,6 +4,6 @@
 
 ## Лекции
 
-**Лекция 16 (Принцип инверсии управления и внедрение зависимостей)**
+**Лекция 1 (Знакомство с Android. Установка ПО и создание проекта)**
 - [ссылка на видео](https://youtu.be/-QeLlXmeEcE)
 - [конспект лекции по теме](https://github.com/MykolaHodovychenko/android/tree/ru/lectures/lecture01)
