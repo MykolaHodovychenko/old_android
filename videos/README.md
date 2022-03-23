@@ -15,5 +15,5 @@
 ## Лабораторные
 
 **Лаба 1 (Основы Kotlin)**
-- [ссылка на видео](https://youtu.be/ZVLoexsNmGw)
+- [ссылка на видео](https://youtu.be/t8TuePPd3FQ)
 - [конспект лекции по теме](https://github.com/MykolaHodovychenko/android/tree/ru/labs/lab01)
