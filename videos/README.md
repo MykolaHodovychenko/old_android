@@ -17,3 +17,7 @@
 **Лаба 1 (Основы Kotlin)**
 - [ссылка на видео](https://youtu.be/t8TuePPd3FQ)
 - [конспект лекции по теме](https://github.com/MykolaHodovychenko/android/tree/ru/labs/lab01)
+
+**Лаба 2 (Создание макета, взаимодействие с элементами UI)**
+- [ссылка на видео](https://youtu.be/8zGaD0tcceE)
+- [конспект лекции по теме](https://github.com/MykolaHodovychenko/android/tree/ru/labs/lab02)
