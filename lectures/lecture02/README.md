@@ -456,7 +456,7 @@ binding.btnPress.setOnClickListener {
 Проверим работу приложения
 
 <p align="center" style="max-width:40%">
-  <img src="img/img_9.png" />
+  <img src="img/img_8.png" />
 </p>
 
 <p align="center" style="max-width:40%">
