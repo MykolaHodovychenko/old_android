@@ -324,4 +324,141 @@ class MainActivity : AppCompatActivity() {
 
 Далее мы вызываем метод активити `setContentView()`, которому передаем ссылку на корневой элемент созданного дерева UI-элементов, чтобы он его "прикрепил" к дереву элементов всего окна.
 
-Давайте добавим
+Давайте добавим в UI кнопку и текстовую надпись и сделаем так, чтобы по нажатию на кнопку, текстовая надпись меняла свое содержимое.
+
+Для начала, добавим элементы в макет. При добавлении макетов, для наших элементов ОБЯЗАТЕЛЬНО нужно указать атрибут `android:id`. Указание `id` элемента позволяет манипулировать им в исходном коде.
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout ...>
+
+    <TextView
+        android:id="@+id/tv_sometext"
+        ... />
+
+    <Button
+        android:id="@+id/btn_press"
+        ... />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
+
+Обратите на префикс `@+id/`, который указывается перед id элемента.
+
+Полный код макета выглядит следующим образом
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/tv_sometext"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hello World!"
+        android:textSize="32sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btn_press"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Press me!"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_sometext" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
+
+Внешний вид макета выглядит следующим образом
+
+<p align="center">
+  <img src="img/img_7.png" />
+</p>
+
+Далее вернемся в исходный код класса `MainActivity`. Следует напомнить, что для включения `viewBinding` необходимо прописать следующий код в методе `onCreate()`
+
+```kotlin
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+    }
+```
+
+Для доступа к элементам UI, необходимо просто обратиться к свойству объекта binding, название свойства совпадает с названием id элемента в макете, без нижнего подчеркивания.
+
+```kotlin
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        binding.btnPress // Объект кнопки
+        binding.tvSometext // Объект надписи
+    }
+```
+
+Далее, нам необходимо написать обработчик нажатия на кнопку. Для этого необходимо вызвать метод кнопки `setOnClickListener()` и передать методу лямбду, которая будет содержать код нажатия на кнопку.
+
+Если вы вызываете метод, который один аргумент-лямбду, или среди входных аргументов, последним является лямбда, то в Kotlin существует сокращенный формат записи, в котором лямбду можно прописать после списка параметров.
+
+```kotlin
+fun main(args: Array<String>) {
+    func1("0", 1) { println("Сокращенный формат вызова") }
+    func2 { println("Сокращенный формат вызова") }
+}
+
+fun func1(arg0: String, arg1: Int, lambda: () -> Unit) {}
+fun func2(lambda: () -> Unit) {}
+```
+
+Обратите внимание, что при вызове функции `func1()`, сначала передаются обычные параметры, а сама лямбда выносится и записывается отдельно, после скобок.
+
+Когда функция имеет всего один аргумент и это лямбда (как в случае `func2()`), то можно не писать даже пустые скобки, а просто через пробел записывать лямбда-выражение.
+
+Вернемся в Android, в нашем случае функция `setOnClickListener()` принимает на вход один аргумент-лямбду, поэтому мы можем записать обработчик нажатия в следующем формате.
+
+```kotlin
+override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+
+    val binding = ActivityMainBinding.inflate(layoutInflater)
+    setContentView(binding.root)
+
+    binding.btnPress.setOnClickListener {
+        // обработчик выполнится, если пользователь нажмет
+        // на кнопку
+    }
+}
+```
+
+Далее мы должны обратиться к объекту текстовой надписи и поменять ее содержимое.
+
+```kotlin
+binding.btnPress.setOnClickListener {
+    binding.tvSometext.text = "You`ve pressed the button!"
+}
+```
+
+Проверим работу приложения
+
+<p align="center" style="max-width:40%">
+  <img src="img/img_9.png" />
+</p>
+
+<p align="center" style="max-width:40%">
+  <img src="img/img_9.png" />
+</p>
