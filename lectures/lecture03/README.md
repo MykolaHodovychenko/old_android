@@ -498,7 +498,7 @@ override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) 
 
 Наконец, в 2020 году Google представила решение старой проблемы — **Activity Result API**. Это мощный инструмент для обмена данными между активностями и запроса runtime permissions.
 
-Ключевая сущность при работе с Result API - контракт. Это класс, который реализует интерфейс `ActivityResultContract<I, O>`, где `I` определяет тип входных данных, необходимых для запуска Activity; а `O` — тип возвращаемого результата. По факту, значительная часть работы с Result API сводится к регистрации созданного контракта, а затем его запуска.
+Ключевая сущность при работе с Result API - **контракт**. Это класс, который реализует интерфейс `ActivityResultContract<I, O>`, где `I` определяет тип входных данных, необходимых для запуска Activity; а `O` — тип возвращаемого результата. По факту, значительная часть работы с Result API сводится к регистрации созданного контракта, а затем его запуска.
 
 Важный момент - для множества стандартных задач уже существуют контракты "из коробки" (готовые классы, которые нам надо просто использовать).
 
@@ -512,6 +512,261 @@ override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) 
 <p align="center" style="max-width:40%">
   <img src="img/img_12.png" />
 </p>
+
+Сначала рассмотрим вопрос использования Result API для получения разрешения. В манифесте укажем, что приложению понадобится разрешение `android.permission.WRITE_EXTERNAL_STORAGE`
+
+```xml
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="ua.edu.op.resultapiexample">
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
+    <application>
+    ...
+    </application>
+
+</manifest>
+```
+
+Далее нам необходимо получить объект класса `ActivityResultLauncher<I>`, который мы потом запустим для получения результата.
+
+Разработчики Android рекомендуют создать приватное свойство, которое будет хранить ссылку на объект `ActivityResultLauncher<I>`.
+
+Для того, чтобы получить этот объект, мы должны вызвать метод `registerForActivityResult()`, который нам дан от базового класса `Activity`. В этот метод надо передать объект контракта и лямбду, которая будет выполнена после получения результата. Так как получение разрешения является стандартной операцией, то мы используем стандартный контракт из класса `ActivityResultContracts`.
+
+```kotlin
+class MainActivity : AppCompatActivity() {
+
+    ...
+
+    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        Log.d(MainActivity::class.simpleName, "Permission result: $it")
+    }
+
+    ...
+}
+```
+
+В самом лямбда-выражении мы просто выводим в журнал запись о результате запроса на разрешение.
+
+Запустим приложение и проверим результат работы запроса на получение разрешения.
+
+<p align="center" style="max-width:40%">
+  <img src="img/img_13.png" />
+</p>
+
+<p align="center">
+  <img src="img/img_14.png" />
+</p>
+
+Теперь перейдем к написанию собственного контракта для изменения текстовой надписи.
+
+Контракт теоретически можно вынести в отдельный файл, но мы будем его реализовывать в классе `SecondActivity`. Назовем наш класс контракта просто `Contract`. Этот класс будет наследоваться от абстрактного класса `ActivityResultContract<I, O>`. Тип `I` - тип входных данных, тип `O` - тип выходных данных.
+
+```kotlin
+class SecondActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        ...
+    }
+
+    class Contract : ActivityResultContract<Contract.Input, Contract.Output>() {
+        ...
+    }
+}
+```
+
+Таким образом, данные из `MainActivity` в `SecondActivity` будут передаваться в виде объекта типа `I`, а результат будет обратно передаваться в виде объекта типа `O`.
+
+Самым лучшим вариантом будет создать два класса для передачи данных. Один класс назовем `Input`, а второй - `Output`. Так как бизнес-логика внутри этих классов не предполагается, а объекты этих классов будут служить просто контейнерами для данных, то целесообразно использовать такой механизм языка Kotlin как классы данных (`Data classes`). Такие классы используются только для хранения данных. Создадим эти классы внутри класса `Contract`
+
+```kotlin
+class SecondActivity : AppCompatActivity() {
+
+    ...
+    
+    class Contract : ActivityResultContract<Contract.Input, Contract.Output>() {
+
+        data class Input(val message: String)
+        data class Output(val message: String?, val result: Boolean)
+
+    }
+
+    ...
+}
+```
+
+Обратите внимание, что в классе `Output` мы дополнительно добавили булево свойство `result`. Это поле будет содержать результат работы `SecondActivity` (по аналогии с `RESULT_OK` и `RESULT_CANCELLED` в классическом способе получить результат работы `Activity`). Тип `String?` в `Output` означает, что мы можем и не передать результат работы `SecondActivity` (опять же, как в случае с классическим способом получения результата).
+
+Так как класс `ActivityResultContract` является абстрактным, то нам необходимо реализовать два абстрактных метода - `createIntent()` и `parseResult()`.
+
+Важно понимать, что механизм Result API является оберткой над уже существующим механизмом взаимодействия компонент приложения и классом `Intent`. Таким образом, мы в любом случае будем использовать Intent и extras для передачи данных.
+
+Задача метода `createIntent()` заключается в том, чтобы сформировать объект `Intent` с добавленными данными из объекта `Input`. Этот метод будет вызван в процессе запуска `SecondActivity` для получения результата. Также мы добавим статические поля, который хранят строковые значения ключей для механизма extras.
+
+```kotlin
+    class Contract : ActivityResultContract<Contract.Input, Contract.Output>() {
+
+        data class Input(val message: String)
+        data class Output(val message: String?, val result: Boolean)
+
+        override fun createIntent(context: Context, input: Input?): Intent {
+            val intent = Intent(context, SecondActivity::class.java)
+            intent.putExtra(EXTRA_INPUT_MESSAGE, input?.message)
+            return intent
+        }
+
+        companion object {
+            const val EXTRA_INPUT_MESSAGE = "EXTRA_MESSAGE"
+            const val EXTRA_OUTPUT_MESSAGE = "EXTRA_MESSAGE"
+        }
+    }
+```
+
+Далее, реализуем метод `parseResult()`, который вызывается при получении результата. Этот метод принимает Intent, исходящий от `SecondActivity`, "перепаковывает" extras в объект типа `Output`. Этот объект будет передан лямбда-выражению, которое мы напишем в дальнейшем.
+
+```kotlin
+class Contract : ActivityResultContract<Contract.Input, Contract.Output>() {
+
+    data class Input(val message: String)
+    data class Output(val message: String?, val result: Boolean)
+
+    override fun createIntent(context: Context, input: Input?): Intent {
+        val intent = Intent(context, SecondActivity::class.java)
+        intent.putExtra(EXTRA_INPUT_MESSAGE, input?.message)
+        return intent
+    }
+
+    override fun parseResult(resultCode: Int, intent: Intent?): Output {
+        val msg = intent?.getStringExtra(EXTRA_OUTPUT_MESSAGE) ?: ""
+        return Output(msg, resultCode == RESULT_OK)
+    }
+
+    companion object {
+        const val EXTRA_INPUT_MESSAGE = "EXTRA_MESSAGE"
+        const val EXTRA_OUTPUT_MESSAGE = "EXTRA_MESSAGE"
+    }
+}
+```
+
+Теперь давайте сразу реализуем логику в SecondActivity. Для этого класса практически ничего не изменилось - мы также создаем объект Intent и с помощью extras указываем нужные данные, после чего вызываем метод setResult(). Данные от MainActivity приходят в виде Intent. При создании SecondActivity, устанавливаем значение поля ввода тем, что пришло от MainActivity.
+
+```kotlin
+class SecondActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val binding = ActivitySecondBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        // Получаем из Intent значение текстовой надписи и устанавливаем
+        // как значение поля ввода
+        binding.etLabel.setText(intent.getStringExtra(Contract.EXTRA_INPUT_MESSAGE))
+
+        // По нажатию кнопки SEND, отправляем результат
+        binding.btnSend.setOnClickListener {
+            val i = Intent()
+            i.putExtra(Contract.EXTRA_OUTPUT_MESSAGE, binding.etLabel.text.toString())
+            setResult(RESULT_OK, i)
+            finish()
+        }
+    }
+
+    override fun onBackPressed() {
+        setResult(RESULT_CANCELED)
+        super.onBackPressed()
+    }
+
+    class Contract : ActivityResultContract<Contract.Input, Contract.Output>() {
+
+        data class Input(val message: String)
+        data class Output(val message: String?, val result: Boolean)
+
+        override fun createIntent(context: Context, input: Input?): Intent {
+            val intent = Intent(context, SecondActivity::class.java)
+            intent.putExtra(EXTRA_INPUT_MESSAGE, input?.message)
+            return intent
+        }
+
+        override fun parseResult(resultCode: Int, intent: Intent?): Output {
+            val msg = intent?.getStringExtra(EXTRA_OUTPUT_MESSAGE) ?: ""
+            return Output(msg, resultCode == RESULT_OK)
+        }
+
+        companion object {
+            const val EXTRA_INPUT_MESSAGE = "EXTRA_MESSAGE"
+            const val EXTRA_OUTPUT_MESSAGE = "EXTRA_MESSAGE"
+        }
+    }
+}
+```
+
+Теперь необходимо реализовать нужный функционал внутри MainActivity. Создадим приватное свойство, которое будет содержать ссылку на объект ActivityResultLauncher. В лямбда-выражении нам будет передан объект Output. Проверим булеву переменную result и будет действовать исходя из ее значения.
+
+В качестве аргумента метода registerForActivityResult указываем ссылку на объект нашего контракта.
+
+```kotlin
+class MainActivity : AppCompatActivity() {
+
+    private val editMessageLauncher = registerForActivityResult(SecondActivity.Contract()) {
+        when (it.result) {
+            true -> {
+                binding.tvLabel.text = it.message
+            }
+            else -> Unit
+        }
+    }
+}
+```
+
+Теперь напишем обработчик для нажатия на кнопку "CHANGE TEXT LABEL". Внутри обработчика мы получаем значение текстовой надписи, создаем объект `Input` и передаем его в метод `launch()`. В дальнейшем, этот объект будет передан в метод `creteIntent()` нашего контракта.
+
+```kotlin
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityMainBinding
+
+    private val editMessageLauncher = registerForActivityResult(SecondActivity.Contract()) {
+        when (it.result) {
+            true -> {
+                binding.tvLabel.text = it.message
+            }
+            else -> Unit
+        }
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        binding.btnChangeText.setOnClickListener {
+            val text = binding.tvLabel.text.toString()
+            val input = SecondActivity.Contract.Input(text)
+            editMessageLauncher.launch(input)
+        }
+
+    }
+}
+```
+
+Проверим работу нашего кода.
+
+<p align="center" style="max-width:40%">
+  <img src="img/img_15.png" />
+</p>
+
+<p align="center" style="max-width:40%">
+  <img src="img/img_16.png" />
+</p>
+
+<p align="center" style="max-width:40%">
+  <img src="img/img_17.png" />
+</p>
+
+Ниже представлены листинги классов `MainActivity` и `SecondActivity`
 
 ```kotlin
 class MainActivity : AppCompatActivity() {
@@ -538,13 +793,13 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.btnChangeText.setOnClickListener {
-            editMessageLauncher.launch(SecondActivity.Input(binding.tvLabel.text.toString()))
+            val text = binding.tvLabel.text.toString()
+            val input = SecondActivity.Contract.Input(text)
+            editMessageLauncher.launch(input)
         }
 
         binding.btnPermission.setOnClickListener {
-
             requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-
         }
     }
 }
@@ -558,11 +813,11 @@ class SecondActivity : AppCompatActivity() {
         val binding = ActivitySecondBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.etLabel.setText(intent.getStringExtra(EXTRA_INPUT_MESSAGE))
+        binding.etLabel.setText(intent.getStringExtra(Contract.EXTRA_INPUT_MESSAGE))
 
         binding.btnSend.setOnClickListener {
             val i = Intent()
-            i.putExtra(EXTRA_OUTPUT_MESSAGE, binding.etLabel.text.toString())
+            i.putExtra(Contract.EXTRA_OUTPUT_MESSAGE, binding.etLabel.text.toString())
             setResult(RESULT_OK, i)
             finish()
         }
@@ -572,11 +827,11 @@ class SecondActivity : AppCompatActivity() {
         setResult(RESULT_CANCELED)
         super.onBackPressed()
     }
+    
+    class Contract : ActivityResultContract<Contract.Input, Contract.Output>() {
 
-    data class Input(val message: String)
-    data class Output(val message: String?, val result: Boolean)
-
-    class Contract : ActivityResultContract<Input, Output>() {
+        data class Input(val message: String)
+        data class Output(val message: String?, val result: Boolean)
 
         override fun createIntent(context: Context, input: Input?): Intent {
             val intent = Intent(context, SecondActivity::class.java)
@@ -588,11 +843,11 @@ class SecondActivity : AppCompatActivity() {
             val msg = intent?.getStringExtra(EXTRA_OUTPUT_MESSAGE) ?: ""
             return Output(msg, resultCode == RESULT_OK)
         }
-    }
 
-    companion object {
-        const val EXTRA_INPUT_MESSAGE = "EXTRA_MESSAGE"
-        const val EXTRA_OUTPUT_MESSAGE = "EXTRA_MESSAGE"
+        companion object {
+            const val EXTRA_INPUT_MESSAGE = "EXTRA_MESSAGE"
+            const val EXTRA_OUTPUT_MESSAGE = "EXTRA_MESSAGE"
+        }
     }
 }
 ```
