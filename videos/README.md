@@ -12,6 +12,14 @@
 - [ссылка на видео](https://youtu.be/e8cPz56X81w)
 - [конспект лекции по теме](https://github.com/MykolaHodovychenko/android/tree/ru/lectures/lecture02)
 
+**Лекция 3 (Создание Activity. Манифест приложения)**
+- [ссылка на видео]()
+- [конспект лекции по теме](https://github.com/MykolaHodovychenko/android/tree/ru/lectures/lecture03)
+
+**Лекция 4 (Жизненный цикл Activity. Контекст)**
+- [ссылка на видео]()
+- [конспект лекции по теме](https://github.com/MykolaHodovychenko/android/tree/ru/lectures/lecture04)
+
 ## Лабораторные
 
 **Лаба 1 (Основы Kotlin)**
@@ -21,3 +29,6 @@
 **Лаба 2 (Создание макета, взаимодействие с элементами UI)**
 - [ссылка на видео](https://youtu.be/8zGaD0tcceE)
 - [конспект лекции по теме](https://github.com/MykolaHodovychenko/android/tree/ru/labs/lab02)
+
+**Лаба 3 (Создание макета, взаимодействие с элементами UI)**
+- [конспект лекции по теме](https://github.com/MykolaHodovychenko/android/tree/ru/labs/lab03)

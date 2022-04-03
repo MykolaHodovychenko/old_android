@@ -650,7 +650,7 @@ class Contract : ActivityResultContract<Contract.Input, Contract.Output>() {
 }
 ```
 
-Теперь давайте сразу реализуем логику в SecondActivity. Для этого класса практически ничего не изменилось - мы также создаем объект Intent и с помощью extras указываем нужные данные, после чего вызываем метод setResult(). Данные от MainActivity приходят в виде Intent. При создании SecondActivity, устанавливаем значение поля ввода тем, что пришло от MainActivity.
+Теперь давайте сразу реализуем логику в `SecondActivity`. Для этого класса практически ничего не изменилось - мы также создаем объект `Intent` и с помощью `extras` указываем нужные данные, после чего вызываем метод `setResult()`. Данные от `MainActivity` приходят в виде Intent. При создании `SecondActivity`, устанавливаем значение поля ввода тем, что пришло от `MainActivity`.
 
 ```kotlin
 class SecondActivity : AppCompatActivity() {
@@ -702,9 +702,9 @@ class SecondActivity : AppCompatActivity() {
 }
 ```
 
-Теперь необходимо реализовать нужный функционал внутри MainActivity. Создадим приватное свойство, которое будет содержать ссылку на объект ActivityResultLauncher. В лямбда-выражении нам будет передан объект Output. Проверим булеву переменную result и будет действовать исходя из ее значения.
+Теперь необходимо реализовать нужный функционал внутри MainActivity. Создадим приватное свойство, которое будет содержать ссылку на объект `ActivityResultLauncher`. В лямбда-выражении нам будет передан объект `Output`. Проверим булеву переменную `result` и будет действовать исходя из ее значения.
 
-В качестве аргумента метода registerForActivityResult указываем ссылку на объект нашего контракта.
+В качестве аргумента метода `registerForActivityResult()` указываем ссылку на объект нашего контракта.
 
 ```kotlin
 class MainActivity : AppCompatActivity() {
