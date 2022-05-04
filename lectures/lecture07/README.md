@@ -54,8 +54,8 @@ class MainActivity : AppCompatActivity() {
 
 Запустим приложение и посмотрим на результат
 
-<p align="center" style="max-width:30%">
-  <img src="img/img_01.png" />
+<p align="center" style="margin:auto">
+  <img src="img/img_01.png" width="300" />
 </p>
 
 ### Настройка диалогового окна
