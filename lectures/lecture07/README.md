@@ -81,7 +81,7 @@ class ExampleDialog : DialogFragment() {
 
 Посмотрим на результат
 <div align="center" style="margin:auto">
-  <img src="img/img_02.png" width="400"/>
+  <img src="img/img_02.png" width="300"/>
 </div>
 
 Возможности Android позволяют вам вместо простого сообщения добавить в диалоговое окно группу радиокнопок или чекбоксов. По ссылке [здесь](https://developer.android.com/guide/topics/ui/dialogs) можно посмотреть информацию о видах диалоговых окон и о том, как их создавать.
