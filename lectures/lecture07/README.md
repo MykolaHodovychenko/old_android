@@ -80,7 +80,7 @@ class ExampleDialog : DialogFragment() {
 ```
 
 Посмотрим на результат
-<div align="center" style="max-width:30%;margin:auto">
+<div align="center" style="width:30%;margin:auto">
   <img src="img/img_02.png"/>
 </div>
 
