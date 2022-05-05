@@ -88,7 +88,7 @@ class ExampleDialog : DialogFragment() {
 
 ### Диалоговое окно выбора даты и времени
 
-Отдельно стоит упомянуть про стандартные диалоговое окна для выбора даты (класс DatePickerDialog) и времени (класс TimePickerDialog).
+Отдельно стоит упомянуть про стандартные диалоговое окна для выбора даты (класс `DatePickerDialog`) и времени (класс `TimePickerDialog`).
 
 > Выбор даты и времени также реализован в виде отдельных UI виджетов, которые можно поместить в любой макет.
 
@@ -96,13 +96,170 @@ class ExampleDialog : DialogFragment() {
 
 Рассмотрим пример создания диалогового окна для выбора даты. Обратите внимание, что номер возвращаемого месяца начинается с 0, поэтому увеличиваем значение месяца на единицу.
 
+```kotlin
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        val is24 = android.text.format.DateFormat.is24HourFormat(this)
+        val clockFormat = if (is24) TimeFormat.CLOCK_24H else TimeFormat.CLOCK_12H
+
+        val picker = MaterialTimePicker.Builder()
+            .setTimeFormat(clockFormat)
+            .setHour(12)
+            .setMinute(12)
+            .setTitleText("Select time")
+            .build()
+
+        picker.addOnPositiveButtonClickListener {
+            val hour = picker.hour
+            val minutes = picker.minute
+            Toast.makeText(this, "$hour : $minutes", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.button.setOnClickListener {
+            picker.show(supportFragmentManager, "picker")
+        }
+    }
+
+```
+
+Проверим результат
+
+<div align="center" style="margin:auto">
+  <img src="img/img_03.png" width="300"/>
+</div>
+
+
 Рассмотрим пример для диалогового окна выбора времени.
+
+```kotlin
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        
+        val picker = MaterialDatePicker.Builder.datePicker()
+            .setInputMode(MaterialDatePicker.INPUT_MODE_CALENDAR)
+            .build()
+
+        picker.addOnPositiveButtonClickListener {
+            val outputDateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).apply {
+                timeZone = TimeZone.getTimeZone("UTC")
+            }
+            Toast.makeText(this, outputDateFormat.format(it), Toast.LENGTH_SHORT).show()
+        }
+
+        binding.button.setOnClickListener {
+            picker.show(supportFragmentManager, "picker")
+        }
+    }
+}
+```
+
+Проверим результат
+
+<div align="center" style="margin:auto">
+  <img src="img/img_04.png" width="300"/>
+</div>
 
 ## Передача и получение данных из диалога
 
 Так как диалоговое окно "обернуто" в объект фрагмента, то передача данных в диалоговое окно и получение данных из диалогового окна реализуется так же, как и в случае работы с фрагментами.
 
-Рассмотрим небольшой пример в качестве наглядной иллюстрации процесса обмена данными с диалоговым окном. Используем уже созданный проект, данные вводятся в поле ввода, после чего они передаются в диалоговое окно. Результат работы диалогового окна передается обратно в Activity, которое вызвало диалоговое окно.
+Рассмотрим небольшой пример в качестве наглядной иллюстрации процесса обмена данными с диалоговым окном.
+
+```kotlin
+class ExampleDialog : DialogFragment() {
+
+    lateinit var listener: ExampleDialogListener
+
+    interface ExampleDialogListener {
+        fun onDialogResult(color: String)
+    }
+
+    private lateinit var colors: Array<String>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        colors = arguments?.getStringArray("array") as Array<String>
+    }
+
+    private var selected: Int = 0
+
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        return AlertDialog.Builder(requireActivity())
+            .setSingleChoiceItems(
+                colors, 0
+            ) { _, i -> selected = i }
+            .setIcon(R.drawable.ic_anchor)
+            .setTitle("Dialog fragment")
+            .setPositiveButton("Ok") { _, id -> listener.onDialogResult(colors[selected]) }
+            .setNeutralButton("Neutral", null)
+            .setNegativeButton("Cancel", null)
+            .create()
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+
+        try {
+            listener = context as ExampleDialogListener
+        } catch (e: ClassCastException) {
+        }
+    }
+
+    companion object {
+        fun newInstance(array: Array<String>): ExampleDialog {
+            val args = Bundle()
+            args.putStringArray("array", array)
+            val fragment = ExampleDialog()
+            fragment.arguments = args
+            return fragment
+        }
+    }
+}
+```
+
+Класс MainActivity
+
+```kotlin
+class MainActivity : AppCompatActivity(), ExampleDialog.ExampleDialogListener {
+
+    lateinit var binding: ActivityMainBinding
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+
+        val colors = arrayOf("#ff0000", "#fff000", "#ffff00")
+
+        binding.button.setOnClickListener {
+            val dialog = ExampleDialog.newInstance(colors)
+            dialog.show(supportFragmentManager,"dlg")
+        }
+    }
+
+    override fun onDialogResult(color: String) {
+        binding.root.setBackgroundColor(Color.parseColor(color))
+    }
+}
+```
+
+Посмотрим на результат
+
+<div align="center" style="margin:auto">
+  <img src="img/img_05.png" width="300"/>
+</div>
 
 ## Широковещательные сообщения. Прием и отсылка сообщений
 
